@@ -4,6 +4,7 @@ networks:
   default:
     name: web_net
 
+
 volumes:
   traefik-acme:
     name: traefik-acme
@@ -26,7 +27,7 @@ services:
       - "--entrypoints.http.address=:80"
       - "--entrypoints.https.address=:443"
 
-      - "--certificatesresolvers.mycert.acme.email=amirbahador.pv@gmail.com"
+      - "--certificatesresolvers.mycert.acme.email=alireza@gmail.com"
       - "--certificatesresolvers.mycert.acme.storage=/acme/acme.json"
       - "--certificatesresolvers.mycert.acme.tlschallenge=true"
 
@@ -46,13 +47,13 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=web_net"
       - "traefik.http.routers.traefik.entrypoints=http"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.game2ni.ir`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.itbt.ir`)"
       - "traefik.http.routers.traefik.middlewares=https-redirect"
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.web-auth.basicauth.users=user:$$apr1$$QpkypDvQ$$FjJgBGyX/By8agkOCUvDo."
       - "traefik.http.routers.traefik-secure.middlewares=web-auth"
       - "traefik.http.routers.traefik-secure.entrypoints=https"
-      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.game2ni.ir`)"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.itbt.ir`)"
       - "traefik.http.routers.traefik-secure.tls=true"
       - "traefik.http.routers.traefik-secure.tls.options=default"
       - "traefik.http.routers.traefik-secure.tls.certresolver=mycert"
@@ -62,19 +63,68 @@ services:
     image: nginx
     networks:
       - default
-
+    ports:
+      - 80:80
+      - 443:443
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web_net"
       - "traefik.http.routers.traefik.entrypoints=http"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.game2ni.ir`)"
+      - "traefik.http.routers.traefik.rule=Host(`devops.itbt.ir`)"
       - "traefik.http.routers.traefik.middlewares=https-redirect"
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.web-auth.basicauth.users=user:$$apr1$$QpkypDvQ$$FjJgBGyX/By8agkOCUvDo."
       - "traefik.http.routers.traefik-secure.middlewares=web-auth"
       - "traefik.http.routers.traefik-secure.entrypoints=https"
-      - "traefik.http.routers.traefik-secure.rule=Host(`devops.game2ni.ir`)"
+      - "traefik.http.routers.traefik-secure.rule=Host(`devops.itbt.ir`)"
       - "traefik.http.routers.traefik-secure.tls=true"
       - "traefik.http.routers.traefik-secure.tls.options=default"
       - "traefik.http.routers.traefik-secure.tls.certresolver=mycert"
       - "traefik.http.services.traefik.loadbalancer.server.port=80"
+      
+  nexus:
+    image: sonatype/nexus3:3.34.1
+    container_name: nexus 
+    restart: always
+    volumes:
+      - "nexus-data:/sonatype-work"
+    networks:
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.repo.entrypoints=http"
+      - "traefik.http.routers.repo.rule=Host(`registry.itbt.com`)"
+      - "traefik.http.routers.repo.service=repo-secure"
+      - "traefik.http.routers.repo.middlewares=https-redirect"
+      - "traefik.http.routers.repo-secure.entrypoints=https"
+      - "traefik.http.routers.repo-secure.rule=Host(`registry.itbt.com`)"
+      - "traefik.http.routers.repo-secure.tls=true"
+      - "traefik.http.routers.repo-secure.tls.options=default"
+      - "traefik.http.routers.repo-secure.tls.certresolver=mycert"
+      - "traefik.http.routers.repo-secure.service=repo-secure"
+      - "traefik.http.services.repo-secure.loadbalancer.server.port=8081"
+
+      - "traefik.http.routers.nexusdocker.entrypoints=http"
+      - "traefik.http.routers.nexusdocker.rule=Host(`docker.itbt.com`)"
+      - "traefik.http.routers.nexusdocker.middlewares=https-redirect"
+      - "traefik.http.routers.nexusdocker-secure.entrypoints=https"
+      - "traefik.http.routers.nexusdocker.service=nexusdocker-secure"
+      - "traefik.http.routers.nexusdocker-secure.rule=Host(`docker.itbt.com`)"
+      - "traefik.http.routers.nexusdocker-secure.tls=true"
+      - "traefik.http.routers.nexusdocker-secure.tls.options=default"
+      - "traefik.http.routers.nexusdocker-secure.tls.certresolver=mycert"
+      - "traefik.http.routers.nexusdocker-secure.service=nexusdocker-secure"
+      - "traefik.http.services.nexusdocker-secure.loadbalancer.server.port=8085"
+
+      - "traefik.http.routers.nexusmirror.entrypoints=http"
+      - "traefik.http.routers.nexusmirror.rule=Host(`nexus.itbt.com`)"
+      - "traefik.http.routers.nexusmirror.middlewares=https-redirect"
+      - "traefik.http.routers.nexusmirror.service=nexusmirror-secure"
+      - "traefik.http.routers.nexusmirror-secure.entrypoints=https"
+      - "traefik.http.routers.nexusmirror-secure.rule=Host(`nexus.itbt.com`)"
+      - "traefik.http.routers.nexusmirror-secure.tls=true"
+      - "traefik.http.routers.nexusmirror-secure.tls.options=default"
+      - "traefik.http.routers.nexusmirror-secure.tls.certresolver=mycert"
+      - "traefik.http.routers.nexusmirror-secure.service=nexusmirror-secure"
+      - "traefik.http.services.nexusmirror-secure.loadbalancer.server.port=8084"
